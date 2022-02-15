@@ -8,16 +8,11 @@ const iframe: any = document.getElementById('iframe')
 const provider = new ethers.providers.Web3Provider((window as any).ethereum)
 
 const reloadWidget = () => {
-    iframe.contentWindow?.postMessage(
-        {
-            type: 'widgetReload',
-        },
-        widgetUrl
-    )
+    iframe.contentWindow?.postMessage({type: 'widgetReload'}, widgetUrl)
 }
 
 provider.send('eth_requestAccounts', []).then(() => {
-    iframe.addEventListener('load', (e) => {
+    iframe.addEventListener('load', _ => {
         iframe.contentWindow.postMessage({
                 type: 'widgetConfig',
                 config: {
@@ -30,14 +25,12 @@ provider.send('eth_requestAccounts', []).then(() => {
     })
 
     window.addEventListener('message', (e) => {
-        if (e.origin !== widgetUrl || !e.data.jsonrpc || !provider.getSigner())
-            return
+        if (e.origin !== widgetUrl || !e.data.jsonrpc || !provider.getSigner()) return
 
         const request = e.data.method
 
         provider.send(request?.method, request?.params || []).then((result) => {
-            iframe.contentWindow!.postMessage(
-                {
+            iframe.contentWindow!.postMessage({
                     jsonrpc: e.data.jsonrpc,
                     id: e.data.id,
                     result,
