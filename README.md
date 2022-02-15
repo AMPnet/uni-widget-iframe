@@ -1,46 +1,75 @@
-# Getting Started with Create React App
+# Uniswap SwapWidget in Iframe
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A React app that wraps Uniswap [SwapWidget](https://docs.uniswap.org/sdk/widgets/swap-widget) component, so it can be injected into iframe, regardless of which JS framework you use. This enables us to use our own signer/provider that we use in our dApp.
 
-## Available Scripts
+## Example
 
-In the project directory, you can run:
+Full example in vanilla JavaScript/TypeScript is [here](https://stackblitz.com/edit/typescript-voqqvk?file=index.ts).
 
-### `npm start`
+> index.html
+```html
+<iframe
+  id="iframe"
+  style="width: 395px; border: 0; display: block; height: 500px"
+>
+</iframe>
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+> index.ts
+```ts
+import { ethers } from 'ethers';
+import './style.css';
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+const widgetUrl = 'https://uni-widget-iframe.vercel.app';
+const iframe: HTMLIFrameElement = document.getElementById('iframe');
 
-### `npm test`
+// ensure that you have MetaMask installed.
+const provider = new ethers.providers.Web3Provider((window as any).ethereum);
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+const reloadWidget = () => {
+  iframe.contentWindow?.postMessage(
+    {
+      type: 'widgetReload',
+    },
+    widgetUrl
+  );
+};
 
-### `npm run build`
+provider.send('eth_requestAccounts', []).then(() => {
+  iframe.addEventListener('load', (e) => {
+    iframe.contentWindow.postMessage(
+      {
+        type: 'widgetConfig',
+        config: {
+          jsonRpcEndpoint: 'https://polygon-rpc.com/',
+          tokenList: 'https://tokens.uniswap.org/',
+        },
+      },
+      widgetUrl
+    );
+  });
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+  window.addEventListener('message', (e) => {
+    if (e.origin !== widgetUrl || !e.data.jsonrpc || !provider.getSigner())
+      return;
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+    const request = e.data.method;
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+    provider.send(request?.method, request?.params || []).then((result) => {
+      iframe.contentWindow!.postMessage(
+        {
+          jsonrpc: e.data.jsonrpc,
+          id: e.data.id,
+          result,
+        },
+        widgetUrl
+      );
+    });
+  });
 
-### `npm run eject`
+  provider.provider.on('accountsChanged', () => reloadWidget());
+  provider.provider.on('networkChanged', () => reloadWidget());
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+  iframe.setAttribute('src', widgetUrl);
+});
+```
