@@ -8,21 +8,24 @@ import {TokenInfo} from '@uniswap/token-lists'
 function App() {
     const [widgetConfig, setWidgetConfig] = useState({} as Partial<SwapWidgetProps>)
 
-    const configUpdate = useCallback(event => {
-        const type = event.data.type
-        if (type === 'widgetReload') {
-            window.location.reload()
-        } else if (type === 'widgetConfig') {
-            if (event.data.config) setWidgetConfig(() => event.data.config)
+    const eventHandler = useCallback(event => {
+        const data = event.data as WidgetEventMessageInputData
+        if (data.target !== 'swapWidget') return
+
+        switch (data.method) {
+            case 'setConfig':
+                return setWidgetConfig(() => data.payload)
+            case 'reload':
+                return window.location.reload()
         }
     }, [])
 
     useEffect(() => {
-        window.addEventListener('message', configUpdate)
+        window.addEventListener('message', eventHandler)
         return () => {
-            window.removeEventListener('message', configUpdate)
+            window.removeEventListener('message', eventHandler)
         }
-    }, [configUpdate])
+    }, [eventHandler])
 
     if (window === window.parent || !widgetConfig.jsonRpcEndpoint) return <></>
 
@@ -38,7 +41,7 @@ function App() {
             width={widgetConfig.width}
             dialog={widgetConfig.dialog}
             className={widgetConfig.className}
-            onError={undefined}
+            onError={(error, info) => window.parent.postMessage(outputMessage('onError', {error, info}), '*')}
 
             tokenList={widgetConfig.tokenList}
             defaultInputAddress={widgetConfig.defaultInputAddress}
@@ -47,10 +50,35 @@ function App() {
             defaultOutputAmount={widgetConfig.defaultOutputAmount}
             convenienceFee={widgetConfig.convenienceFee}
             convenienceFeeRecipient={widgetConfig.convenienceFeeRecipient}
-            onConnectWallet={undefined}
+            onConnectWallet={() => window.parent.postMessage(outputMessage('onConnectWallet'), '*')}
         />
     )
 }
+
+function outputMessage(method: WidgetOutputMethod, payload?: any): WidgetEventMessageOutputData {
+    return {
+        target: 'swapWidget',
+        method,
+        payload,
+    }
+}
+
+interface WidgetEventMessageInputData {
+    target: 'swapWidget'
+    method: WidgetInputMethod
+    payload?: any
+}
+
+interface WidgetEventMessageOutputData {
+    target: 'swapWidget'
+    method: WidgetOutputMethod
+    payload?: any
+}
+
+type WidgetInputMethod = 'reload' | 'setConfig'
+type WidgetOutputMethod = 'onConnectWallet' | 'onError'
+
+// Widget specific types
 
 type SwapWidgetProps = SwapProps & WidgetProps
 

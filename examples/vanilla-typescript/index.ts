@@ -8,14 +8,18 @@ const iframe: any = document.getElementById('iframe')
 const provider = new ethers.providers.Web3Provider((window as any).ethereum)
 
 const reloadWidget = () => {
-    iframe.contentWindow?.postMessage({type: 'widgetReload'}, widgetUrl)
+    iframe.contentWindow?.postMessage({
+        target: 'swapWidget',
+        method: 'reload',
+    }, widgetUrl)
 }
 
 provider.send('eth_requestAccounts', []).then(() => {
     iframe.addEventListener('load', _ => {
         iframe.contentWindow.postMessage({
-                type: 'widgetConfig',
-                config: {
+                target: 'swapWidget',
+                method: 'setConfig',
+                payload: {
                     jsonRpcEndpoint: 'https://polygon-rpc.com/',
                     tokenList: 'https://tokens.uniswap.org/',
                 },
