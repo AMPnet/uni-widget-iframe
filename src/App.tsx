@@ -4,8 +4,7 @@ import {SwapWidget} from '@uniswap/widgets'
 import {IFrameEthereumProvider} from '@ethvault/iframe-provider'
 import {Provider} from '@web3-react/types'
 import {TokenInfo} from '@uniswap/token-lists'
-import {Provider as Provider$1} from '@ethersproject/abstract-provider'
-import {Signer} from '@ethersproject/abstract-signer'
+import {providers, Signer} from 'ethers'
 
 function App() {
     const [widgetConfig, setWidgetConfig] = useState({} as Partial<SwapWidgetProps>)
@@ -37,15 +36,13 @@ function App() {
     const iframeProvider = new IFrameEthereumProvider() as any
     iframeProvider.request = iframeProvider.send
 
-    // TODO: uncomment when issue with 'unsupported network' is resolved
-    // const signer = new Web3Provider(iframeProvider).getSigner()
-    // const provider = new StaticJsonRpcProvider(widgetConfig.jsonRpcEndpoint!)
-    //
-    // const widgetProvider = {
-    //     signer: signer,
-    //     provider: provider
-    // }
-    const widgetProvider = iframeProvider
+    const signer = new providers.Web3Provider(iframeProvider).getSigner()
+    const provider = new providers.JsonRpcProvider(widgetConfig.jsonRpcEndpoint!)
+
+    const widgetProvider = {
+        signer: signer,
+        provider: provider
+    }
 
     return (
         <SwapWidget
@@ -116,7 +113,7 @@ type DefaultAddress = string | {
 interface WidgetProps {
     theme?: Theme;
     locale?: string;
-    provider?: Provider | Provider$1 | ProviderWithSigner;
+    provider?: Provider | providers.Provider | ProviderWithSigner;
     jsonRpcEndpoint?: string;
     width?: string | number;
     dialog?: HTMLElement | null;
@@ -125,7 +122,7 @@ interface WidgetProps {
 }
 
 interface ProviderWithSigner {
-    provider: Provider$1;
+    provider: providers.Provider;
     signer: Signer;
 }
 
