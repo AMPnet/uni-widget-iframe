@@ -37,7 +37,7 @@ function App() {
     iframeProvider.request = iframeProvider.send
 
     const signer = new providers.Web3Provider(iframeProvider).getSigner()
-    const provider = new providers.JsonRpcProvider(widgetConfig.jsonRpcEndpoint!)
+    const provider = new providers.StaticJsonRpcProvider(widgetConfig.jsonRpcEndpoint!)
 
     const widgetProvider = {
         signer: signer,
