@@ -4,6 +4,8 @@ import {SwapWidget} from '@uniswap/widgets'
 import {IFrameEthereumProvider} from '@ethvault/iframe-provider'
 import {Provider} from '@web3-react/types'
 import {TokenInfo} from '@uniswap/token-lists'
+import {Provider as Provider$1} from '@ethersproject/abstract-provider'
+import {Signer} from '@ethersproject/abstract-signer'
 
 function App() {
     const [widgetConfig, setWidgetConfig] = useState({} as Partial<SwapWidgetProps>)
@@ -27,17 +29,29 @@ function App() {
         }
     }, [eventHandler])
 
-    if (window === window.parent || !widgetConfig.jsonRpcEndpoint) return <></>
+    const isInIframe: boolean = window !== window.parent
+    const isInitialized: boolean = !!widgetConfig.jsonRpcEndpoint
 
-    let provider = new IFrameEthereumProvider();
-    (provider as any).request = provider.send
+    if (!isInIframe || !isInitialized) return <></>
+
+    const iframeProvider = new IFrameEthereumProvider() as any
+    iframeProvider.request = iframeProvider.send
+
+    // TODO: uncomment when issue with 'unsupported network' is resolved
+    // const signer = new Web3Provider(iframeProvider).getSigner()
+    // const provider = new StaticJsonRpcProvider(widgetConfig.jsonRpcEndpoint!)
+    //
+    // const widgetProvider = {
+    //     signer: signer,
+    //     provider: provider
+    // }
+    const widgetProvider = iframeProvider
 
     return (
         <SwapWidget
             theme={widgetConfig.theme}
             locale={widgetConfig.locale}
-            provider={provider as any}
-            jsonRpcEndpoint={widgetConfig.jsonRpcEndpoint}
+            provider={widgetProvider}
             width={widgetConfig.width}
             dialog={widgetConfig.dialog}
             className={widgetConfig.className}
@@ -102,12 +116,17 @@ type DefaultAddress = string | {
 interface WidgetProps {
     theme?: Theme;
     locale?: string;
-    provider?: Provider;
+    provider?: Provider | Provider$1 | ProviderWithSigner;
     jsonRpcEndpoint?: string;
     width?: string | number;
     dialog?: HTMLElement | null;
     className?: string;
     onError?: (error: any, info: any) => void;
+}
+
+interface ProviderWithSigner {
+    provider: Provider$1;
+    signer: Signer;
 }
 
 interface Theme extends Partial<Attributes>, Partial<Colors> {
