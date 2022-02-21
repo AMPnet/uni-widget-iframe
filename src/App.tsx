@@ -36,13 +36,17 @@ function App() {
     const iframeProvider = new IFrameEthereumProvider() as any
     iframeProvider.request = iframeProvider.send
 
-    const signer = new providers.Web3Provider(iframeProvider).getSigner()
-    const provider = new providers.StaticJsonRpcProvider(widgetConfig.jsonRpcEndpoint!)
-
-    const widgetProvider = {
-        signer: signer,
-        provider: provider
-    }
+    // TODO: uncomment when error on widget side is resolved
+    // Swap failed Error: invalid object key - gas (argument="transaction:gas", value={"gas":"0x26bbe","value":"0xdbf4a8777c6c248","from":"0x9a72ad187229e9338c7f21e019544947fb25d473","to":"0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45","data":"0x5ae401dc000000000000000000000000000000000000000000000000000000006213917500000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000e404e45aaf0000000000000000000000000d500b1d8e8ef31e21c99d1db9a6444d3adf12700000000000000000000000007ceb23fd6bc0add59e62ac25578270cff1b9f6190000000000000000000000000000000000000000000000000000000000000bb80000000000000000000000009a72ad187229e9338c7f21e019544947fb25d4730000000000000000000000000000000000000000000000000dbf4a8777c6c2480000000000000000000000000000000000000000000000000001ff23625df5c3000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"}, code=INVALID_ARGUMENT, version=properties/5.5.0)
+    //
+    // const signer = new providers.Web3Provider(iframeProvider).getSigner()
+    // const provider = new providers.StaticJsonRpcProvider(widgetConfig.jsonRpcEndpoint!)
+    //
+    // const widgetProvider = {
+    //     signer: signer,
+    //     provider: provider
+    // }
+    const widgetProvider = iframeProvider
 
     return (
         <SwapWidget

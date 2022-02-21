@@ -1,0 +1,3 @@
+input, [contenteditable] {
+    -webkit-user-select: text !important;
+}
