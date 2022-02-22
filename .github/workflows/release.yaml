@@ -1,16 +1,11 @@
-
-
 name: Release
 on:
-  schedule:
-    - cron:  '0 12 * * 1-4' # every day 12:00 UTC Monday-Thursday
-
-  # manual trigger
   workflow_dispatch:
     inputs:
       version:
         description: 'version tag (e.g. 1.0.0-alpha3)'
         required: true
+
 jobs:
   create_release:
     name: Create Release
@@ -19,17 +14,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Set up node
+      - name: Cache node modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Node ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
-          node-version: 14
-          registry-url: https://registry.npmjs.org
+          node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: npm ci --debug
 
-      - name: Build the IPFS bundle
-        run: yarn build
+      - name: Generate build
+        run: npm run build
 
       - name: Pin to IPFS
         id: upload
