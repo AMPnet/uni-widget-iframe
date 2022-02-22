@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'version tag (e.g. 1.0.0-alpha3'
+        description: 'version tag (e.g. 1.0.0-alpha3)'
         required: true
 jobs:
   create_release:
@@ -35,7 +35,7 @@ jobs:
         id: upload
         uses: anantaramdas/ipfs-pinata-deploy-action@v1.6.3
         with:
-          pin-name: Uniswap Widget Iframe ${{ inputs.version }}
+          pin-name: Uniswap Widget Iframe ${{ github.event.inputs.version }}
           path: './build'
           pinata-api-key: ${{ secrets.PINATA_API_KEY }}
           pinata-secret-api-key: ${{ secrets.PINATA_API_SECRET_KEY }}
@@ -52,8 +52,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ inputs.version }}
-          release_name: Release ${{ inputs.version }}
+          tag_name: ${{ github.event.inputs.version }}
+          release_name: Release ${{ github.event.inputs.version }}
           body: |
             IPFS hash of the deployment:
             - CIDv0: `${{ steps.upload.outputs.hash }}`
